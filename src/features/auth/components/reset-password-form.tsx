@@ -41,8 +41,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       }}
       className="space-y-4 text-left"
     >
-      {/* Row: Password & Confirm Password (2 columns) */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Row: Password & Confirm Password (Responsive: stacked on mobile, side-by-side on tablet/desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <form.Field
           name="password"
           children={(field) => {

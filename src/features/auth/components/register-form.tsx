@@ -39,8 +39,8 @@ export function RegisterForm() {
       }}
       className="space-y-4 text-left"
     >
-      {/* Row 1: Full Name & Phone Number (2 columns) */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Row 1: Full Name & Phone Number (Responsive: stacked on mobile, side-by-side on tablet/desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <form.Field
           name="name"
           children={(field) => {
@@ -56,7 +56,7 @@ export function RegisterForm() {
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Daffa Abdullah"
+                  placeholder="Enter your name..."
                   className={cn(
                     "rounded-xl border border-zinc-200 bg-white h-11 px-4 text-sm w-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 focus-visible:border-zinc-950 shadow-sm",
                     hasError && "border-destructive focus-visible:ring-destructive"
@@ -101,7 +101,7 @@ export function RegisterForm() {
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="62851..."
+                  placeholder="62......"
                   className={cn(
                     "rounded-xl border border-zinc-200 bg-white h-11 px-4 text-sm w-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 focus-visible:border-zinc-950 shadow-sm",
                     hasError && "border-destructive focus-visible:ring-destructive"
@@ -179,8 +179,8 @@ export function RegisterForm() {
         }}
       />
 
-      {/* Row 3: Password & Confirm Password (2 columns) */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Row 3: Password & Confirm Password (Responsive: stacked on mobile, side-by-side on tablet/desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <form.Field
           name="password"
           children={(field) => {
@@ -302,7 +302,7 @@ export function RegisterForm() {
               search={{ mode: "login" }}
               className="text-sm font-medium text-zinc-900 underline underline-offset-4 hover:opacity-80"
             >
-              log in instead
+              Log in instead
             </Link>
             <Button
               type="submit"
