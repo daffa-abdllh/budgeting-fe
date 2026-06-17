@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const walletSchema = z.object({
   name: z.string().min(1, "Wallet name is required").max(50, "Wallet name is too long"),
-  balance: z.number().min(0, "Initial balance cannot be negative"),
+  balance: z.number({ message: "Initial balance is required" }).min(0, "Initial balance cannot be negative"),
 });
 
 export type CreateWalletInput = z.infer<typeof walletSchema>;

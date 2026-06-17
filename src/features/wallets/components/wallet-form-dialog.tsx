@@ -24,7 +24,7 @@ export function WalletFormDialog({ isOpen, onClose, wallet }: WalletFormDialogPr
   const isPending = createWalletMutation.isPending || updateWalletMutation.isPending;
 
   // Local state for currency formatted display
-  const [balanceInput, setBalanceInput] = useState("0");
+  const [balanceInput, setBalanceInput] = useState("");
 
   const handleBalanceChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -40,13 +40,13 @@ export function WalletFormDialog({ isOpen, onClose, wallet }: WalletFormDialogPr
 
     // Clean all non-digits
     const cleanVal = rawVal.replace(/\D/g, "");
-    const numericVal = Number(cleanVal) || 0;
+    const numericVal = cleanVal === "" ? null : Number(cleanVal);
 
     // Format with dots
     const formattedVal = cleanVal === "" ? "" : cleanVal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
     setBalanceInput(formattedVal);
-    handleChange(numericVal);
+    handleChange(numericVal as unknown as number);
 
     // Restore cursor position based on digit count
     requestAnimationFrame(() => {
@@ -69,7 +69,7 @@ export function WalletFormDialog({ isOpen, onClose, wallet }: WalletFormDialogPr
   const form = useForm({
     defaultValues: {
       name: "",
-      balance: 0,
+      balance: null as unknown as number,
     },
     validators: {
       onChange: walletSchema,
@@ -109,7 +109,7 @@ export function WalletFormDialog({ isOpen, onClose, wallet }: WalletFormDialogPr
       } else {
         form.reset();
         setTimeout(() => {
-          setBalanceInput("0");
+          setBalanceInput("");
         }, 0);
       }
     }
