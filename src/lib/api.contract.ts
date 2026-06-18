@@ -9,6 +9,7 @@ export type ApiResponse<T = null> = {
   data: T;
   message?: string;
   pagination?: PaginationMeta;
+  meta?: Record<string, unknown>;
 };
 
 export type ApiErrorResponse = {

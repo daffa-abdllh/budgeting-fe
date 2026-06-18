@@ -864,7 +864,7 @@ function TransferForm({ onClose }: TransferFormProps) {
 /* ==========================================================================
    Custom UI Dropdown Select Component
    ========================================================================== */
-interface CustomSelectProps {
+export interface CustomSelectProps {
   value: string;
   onChange: (val: string) => void;
   options: { value: string; label: string; sublabel?: string }[];
@@ -874,7 +874,7 @@ interface CustomSelectProps {
   hasError?: boolean;
 }
 
-function CustomSelect({
+export function CustomSelect({
   value,
   onChange,
   options,

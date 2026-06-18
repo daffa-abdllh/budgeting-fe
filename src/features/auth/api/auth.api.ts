@@ -5,6 +5,7 @@ import type {
   ForgotPasswordInput,
   ResetPasswordInput,
   User,
+  SalaryDayInput,
 } from "./auth.contract";
 
 export async function registerUser(payload: RegisterInput) {
@@ -44,5 +45,12 @@ export async function resetPassword(payload: ResetPasswordInput) {
 export async function getUserinfo() {
   return await apiFetch<User>("/auth/userinfo", {
     method: "GET",
+  });
+}
+
+export async function updateSalaryDay(payload: SalaryDayInput) {
+  return await apiFetch<User>("/auth/salary-day", {
+    method: "PUT",
+    json: payload,
   });
 }

@@ -17,6 +17,41 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
+function getCycleDateRange(monthYear: string, salaryDay: number): { startDate: Date; endDate: Date } {
+  const [yearStr, monthStr] = monthYear.split("-");
+  const year = parseInt(yearStr, 10);
+  const monthIndex = parseInt(monthStr, 10) - 1; // 0-indexed month
+
+  let startDateObj = new Date(Date.UTC(year, monthIndex, salaryDay));
+  if (startDateObj.getUTCMonth() !== monthIndex) {
+    startDateObj = new Date(Date.UTC(year, monthIndex + 1, 0));
+  }
+
+  const nextMonthIndex = (monthIndex + 1) % 12;
+  const nextYear = monthIndex === 11 ? year + 1 : year;
+  let nextDateObj = new Date(Date.UTC(nextYear, nextMonthIndex, salaryDay));
+  if (nextDateObj.getUTCMonth() !== nextMonthIndex) {
+    nextDateObj = new Date(Date.UTC(nextYear, nextMonthIndex + 1, 0));
+  }
+
+  const endDateObj = new Date(nextDateObj.getTime() - 24 * 60 * 60 * 1000);
+
+  return { startDate: startDateObj, endDate: endDateObj };
+}
+
+function formatCyclePeriod(monthYear: string, salaryDay: number): string {
+  const { startDate, endDate } = getCycleDateRange(monthYear, salaryDay);
+  
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC"
+  };
+
+  return `${startDate.toLocaleDateString("en-US", options)} - ${endDate.toLocaleDateString("en-US", options)}`;
+}
+
 export function DashboardView() {
   const user = AuthRoute.useLoaderData();
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
@@ -157,6 +192,10 @@ export function DashboardView() {
           <p className="text-sm text-zinc-500 mt-1 select-none">
             Welcome back, <span className="font-semibold text-zinc-800">{user?.name}</span>. Here is your financial summary.
           </p>
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 select-none bg-zinc-100 border border-zinc-150 rounded-lg px-2.5 py-1 w-max">
+            <Calendar className="size-3.5 text-zinc-400" />
+            <span>Cycle: {formatCyclePeriod(activeMonthYear, user?.salary_day ?? 1)}</span>
+          </div>
         </div>
 
         {/* Calendar Picker Selector Popover */}

@@ -4,7 +4,7 @@ import { budgetSchema } from "../api/budget.contract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Calendar, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { Budget } from "../api/budget.contract";
@@ -18,19 +18,121 @@ interface BudgetFormDialogProps {
 }
 
 const MONTHS = [
-  { label: "January", value: "01" },
-  { label: "February", value: "02" },
-  { label: "March", value: "03" },
-  { label: "April", value: "04" },
-  { label: "May", value: "05" },
-  { label: "June", value: "06" },
-  { label: "July", value: "07" },
-  { label: "August", value: "08" },
-  { label: "September", value: "09" },
-  { label: "October", value: "10" },
-  { label: "November", value: "11" },
-  { label: "December", value: "12" },
+  { label: "January", value: "01", shortLabel: "Jan" },
+  { label: "February", value: "02", shortLabel: "Feb" },
+  { label: "March", value: "03", shortLabel: "Mar" },
+  { label: "April", value: "04", shortLabel: "Apr" },
+  { label: "May", value: "05", shortLabel: "May" },
+  { label: "June", value: "06", shortLabel: "Jun" },
+  { label: "July", value: "07", shortLabel: "Jul" },
+  { label: "August", value: "08", shortLabel: "Aug" },
+  { label: "September", value: "09", shortLabel: "Sep" },
+  { label: "October", value: "10", shortLabel: "Oct" },
+  { label: "November", value: "11", shortLabel: "Nov" },
+  { label: "December", value: "12", shortLabel: "Dec" },
 ];
+
+interface MonthYearPickerProps {
+  selectedMonth: string;
+  selectedYear: string;
+  onChange: (month: string, year: string) => void;
+}
+
+function MonthYearPicker({ selectedMonth, selectedYear, onChange }: MonthYearPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [viewingYear, setViewingYear] = useState(parseInt(selectedYear));
+  const [lastSelectedYear, setLastSelectedYear] = useState(selectedYear);
+
+  if (selectedYear !== lastSelectedYear) {
+    setLastSelectedYear(selectedYear);
+    setViewingYear(parseInt(selectedYear));
+  }
+
+  const currentMonthLabel = MONTHS.find((m) => m.value === selectedMonth)?.label || "";
+  const formattedLabel = `${currentMonthLabel} ${selectedYear}`;
+
+  const handlePrevYear = () => setViewingYear((prev) => prev - 1);
+  const handleNextYear = () => setViewingYear((prev) => prev + 1);
+
+  const handleSelectMonth = (monthVal: string) => {
+    onChange(monthVal, viewingYear.toString());
+    setIsOpen(false);
+  };
+
+  const today = new Date();
+  const todayYear = String(today.getFullYear());
+  const todayMonth = String(today.getMonth() + 1).padStart(2, "0");
+
+  return (
+    <div className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "flex items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white h-11 px-4 text-sm w-full text-left focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 shadow-sm transition-all cursor-pointer select-none",
+          isOpen && "ring-1 ring-zinc-950 border-zinc-950"
+        )}
+      >
+        <div className="flex items-center gap-2.5 truncate">
+          <Calendar className="size-4 text-zinc-400 shrink-0 pointer-events-none" />
+          <span className="font-semibold text-zinc-900">{formattedLabel}</span>
+        </div>
+        <ChevronDown className={cn("size-4 text-zinc-400 shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-45 cursor-default" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 bottom-full mb-2 z-50 w-72 bg-white border border-zinc-150 rounded-2xl p-4 shadow-lg flex flex-col gap-3 select-none animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100">
+              <button
+                type="button"
+                onClick={handlePrevYear}
+                className="p-1 rounded-lg hover:bg-zinc-50 text-zinc-500 hover:text-zinc-900 transition-all cursor-pointer border-0 bg-transparent flex items-center justify-center size-7"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <span className="font-bold text-sm text-zinc-800">{viewingYear}</span>
+              <button
+                type="button"
+                onClick={handleNextYear}
+                className="p-1 rounded-lg hover:bg-zinc-50 text-zinc-500 hover:text-zinc-900 transition-all cursor-pointer border-0 bg-transparent flex items-center justify-center size-7"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {MONTHS.map((month) => {
+                const isSelected = selectedYear === String(viewingYear) && selectedMonth === month.value;
+                const isToday = todayYear === String(viewingYear) && todayMonth === month.value;
+
+                return (
+                  <button
+                    key={month.value}
+                    type="button"
+                    onClick={() => handleSelectMonth(month.value)}
+                    className={cn(
+                      "py-2.5 px-1 text-xs rounded-xl font-medium transition-all cursor-pointer text-center relative border-0",
+                      isSelected
+                        ? "bg-zinc-900 text-white font-semibold shadow-sm hover:bg-zinc-850"
+                        : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 bg-transparent"
+                    )}
+                  >
+                    {month.shortLabel}
+                    {isToday && !isSelected && (
+                      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-zinc-900" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function BudgetFormDialog({ isOpen, onClose, budget }: BudgetFormDialogProps) {
   const createBudgetMutation = useCreateBudgetMutationHook();
@@ -81,12 +183,6 @@ export function BudgetFormDialog({ isOpen, onClose, budget }: BudgetFormDialogPr
     });
   };
 
-  // Generate Year Options
-  const currentYearVal = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 8 }, (_, idx) => {
-    const yr = currentYearVal - 2 + idx;
-    return { label: yr.toString(), value: yr.toString() };
-  });
 
   // Local state for Month and Year selection dropdowns
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -339,50 +435,17 @@ export function BudgetFormDialog({ isOpen, onClose, budget }: BudgetFormDialogPr
 
                 {/* Month/Year Selection Field */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-zinc-500 tracking-wide uppercase select-none">
+                  <Label className="text-xs font-semibold text-zinc-500 tracking-wide uppercase select-none font-medium">
                     Budget Period
                   </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Month Dropdown */}
-                    <div className="relative">
-                      <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="rounded-xl border border-zinc-200 bg-white h-11 px-4 text-sm w-full focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 shadow-sm appearance-none cursor-pointer"
-                      >
-                        {MONTHS.map((m) => (
-                          <option key={m.value} value={m.value}>
-                            {m.label}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-zinc-400">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Year Dropdown */}
-                    <div className="relative">
-                      <select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                        className="rounded-xl border border-zinc-200 bg-white h-11 px-4 text-sm w-full focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 shadow-sm appearance-none cursor-pointer"
-                      >
-                        {yearOptions.map((y) => (
-                          <option key={y.value} value={y.value}>
-                            {y.label}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-zinc-400">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
+                  <MonthYearPicker
+                    selectedMonth={selectedMonth}
+                    selectedYear={selectedYear}
+                    onChange={(m, y) => {
+                      setSelectedMonth(m);
+                      setSelectedYear(y);
+                    }}
+                  />
                 </div>
 
                 {/* Actions Footer */}

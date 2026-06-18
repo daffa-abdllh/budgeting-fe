@@ -19,6 +19,15 @@ export interface Budget {
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;
+  spent?: number;
+  remaining?: number;
+}
+
+export interface BudgetSummary {
+  month_year: string;
+  total_income: number;
+  total_allocated: number;
+  unallocated_amount: number;
 }
 
 export interface GetBudgetsResponse {

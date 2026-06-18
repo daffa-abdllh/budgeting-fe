@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { loginUser, registerUser, logoutUser, forgotPassword, resetPassword } from "./auth.api";
+import { loginUser, registerUser, logoutUser, forgotPassword, resetPassword, updateSalaryDay } from "./auth.api";
 import { USERINFO_QUERY_KEY } from "./auth.queries";
-import type { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput } from "./auth.contract";
+import type { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput, SalaryDayInput } from "./auth.contract";
 
 export function useLoginMutation() {
   const queryClient = useQueryClient();
@@ -78,6 +78,21 @@ export function useResetPasswordMutation() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to reset password.");
+    },
+  });
+}
+
+export function useUpdateSalaryDayMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SalaryDayInput) => updateSalaryDay(payload),
+    onSuccess: (response) => {
+      queryClient.setQueryData(USERINFO_QUERY_KEY, response.data);
+      toast.success(response.message || "Salary day updated successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update salary day. Please try again.");
     },
   });
 }

@@ -3,10 +3,12 @@ import { useState } from 'react'
 import { createFileRoute, redirect, Outlet, Link } from '@tanstack/react-router'
 import { getUserinfo } from '@/features/auth/api/auth.api'
 import { useLogoutMutation } from '@/features/auth/api/auth.mutations'
-import { LayoutDashboard, Wallet, PiggyBank, Bell, LogOut, Menu, X, ArrowUpDown } from 'lucide-react'
+import { LayoutDashboard, Wallet, PiggyBank, Bell, LogOut, Menu, X, ArrowUpDown, Settings } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
+import { SalaryDayDialog } from '@/features/auth/components/salary-day-dialog'
+import { LogoutConfirmDialog } from '@/features/auth/components/logout-confirm-dialog'
 
 export const Route = createFileRoute('/_auth')({
   loader: async ({ location }) => {
@@ -38,6 +40,8 @@ function AuthLayout() {
   const user = Route.useLoaderData()
   const logoutMutation = useLogoutMutation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
 
   const navItems = [
     {
@@ -81,7 +85,15 @@ function AuthLayout() {
   }
 
   const handleLogout = () => {
-    logoutMutation.mutate()
+    setIsLogoutConfirmOpen(true)
+  }
+
+  const handleConfirmLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setIsLogoutConfirmOpen(false)
+      }
+    })
   }
 
   const sidebarContent = (
@@ -136,18 +148,27 @@ function AuthLayout() {
 
       {/* User Section / Logout */}
       <div className="pt-4 border-t border-zinc-100 mt-auto space-y-4">
-        <div className="flex flex-col text-left px-2 select-none">
-          <span className="text-sm font-semibold text-zinc-800 truncate">{user?.name}</span>
-          <span className="text-xs text-zinc-400 truncate">{user?.email}</span>
+        <div className="flex items-center justify-between px-2 select-none">
+          <div className="flex flex-col text-left min-w-0 flex-1">
+            <span className="text-sm font-semibold text-zinc-800 truncate">{user?.name}</span>
+            <span className="text-xs text-zinc-400 truncate">{user?.email}</span>
+          </div>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer shrink-0 ml-2"
+            title="Settings"
+          >
+            <Settings className="size-4.5" />
+          </button>
         </div>
 
         <button
           onClick={handleLogout}
           disabled={logoutMutation.isPending}
-          className="w-full flex items-center justify-center gap-2.5 px-4 h-10 text-xs font-semibold rounded-xl border border-red-200 text-red-600 bg-red-50/20 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2.5 px-4 h-10 text-xs font-semibold rounded-xl border border-red-400 text-red-650 bg-red-50/20 hover:bg-red-50 hover:text-red-750 disabled:opacity-50 transition-all cursor-pointer"
         >
-          <LogOut className="size-4" />
-          <span>{logoutMutation.isPending ? 'Logging out...' : 'Sign Out'}</span>
+          <LogOut className="size-4 text-red-400" />
+          <span className="text-red-400">{logoutMutation.isPending ? 'Logging out...' : 'Sign Out'}</span>
         </button>
       </div>
     </div>
@@ -212,6 +233,21 @@ function AuthLayout() {
       <main className="flex-1 min-w-0 p-6 md:p-8">
         <Outlet />
       </main>
+
+      {/* Salary Day Settings Dialog */}
+      <SalaryDayDialog
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        user={user}
+      />
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmDialog
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isPending={logoutMutation.isPending}
+      />
     </div>
   )
 }

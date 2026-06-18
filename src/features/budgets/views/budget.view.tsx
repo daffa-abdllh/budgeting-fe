@@ -3,7 +3,7 @@ import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useBudgetsQuery } from "../api/budget.queries";
 import { BudgetFormDialog } from "../components/budget-form-dialog";
 import { BudgetDeleteDialog } from "../components/budget-delete-dialog";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import {
   Plus,
   Pencil,
@@ -14,8 +14,10 @@ import {
   ChevronRight,
   Calendar,
   PiggyBank,
+  Check,
+  TrendingUp,
 } from "lucide-react";
-import type { Budget } from "../api/budget.contract";
+import type { Budget, BudgetSummary } from "../api/budget.contract";
 
 export function BudgetView() {
   const search = useSearch({ strict: false }) as Record<string, string | number | undefined>;
@@ -37,6 +39,7 @@ export function BudgetView() {
   });
   const budgets = response?.data || [];
   const pagination = response?.pagination;
+  const summary = response?.meta?.summary as BudgetSummary | undefined;
 
   // Modal Dialog local states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -260,6 +263,75 @@ export function BudgetView() {
         </div>
       </div>
 
+      {/* Zero-Based Budgeting Summary Cards */}
+      {summary && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 animate-in fade-in duration-300">
+          {/* Income Card */}
+          <div className="bg-white border border-zinc-150 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Monthly Income</span>
+              <h3 className="text-xl font-bold text-emerald-600">
+                {formatCurrency(summary.total_income)}
+              </h3>
+            </div>
+            <div className="size-10 rounded-xl bg-emerald-50/50 border border-emerald-100/50 flex items-center justify-center">
+              <TrendingUp className="size-5 text-emerald-600" />
+            </div>
+          </div>
+
+          {/* Allocated Card */}
+          <div className="bg-white border border-zinc-150 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Total Allocated</span>
+              <h3 className="text-xl font-bold text-zinc-900">
+                {formatCurrency(summary.total_allocated)}
+              </h3>
+            </div>
+            <div className="size-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
+              <PiggyBank className="size-5 text-zinc-600" />
+            </div>
+          </div>
+
+          {/* Unallocated / Zero-Based Check Card */}
+          <div className={cn(
+            "border rounded-2xl p-5 shadow-sm flex items-center justify-between transition-all duration-300",
+            summary.unallocated_amount === 0
+              ? "bg-emerald-50/20 border-emerald-250"
+              : summary.unallocated_amount > 0
+                ? "bg-amber-50/20 border-amber-250"
+                : "bg-red-50/20 border-red-250"
+          )}>
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Unallocated</span>
+              <h3 className={cn(
+                "text-xl font-bold",
+                summary.unallocated_amount === 0
+                  ? "text-emerald-600"
+                  : summary.unallocated_amount > 0
+                    ? "text-amber-600"
+                    : "text-red-650"
+              )}>
+                {formatCurrency(summary.unallocated_amount)}
+              </h3>
+            </div>
+            <div className={cn(
+              "size-10 rounded-xl flex items-center justify-center",
+              summary.unallocated_amount === 0
+                ? "bg-emerald-50 border border-emerald-100 text-emerald-600"
+                : summary.unallocated_amount > 0
+                  ? "bg-amber-50 border border-amber-100 text-amber-600"
+                  : "bg-red-50 border border-red-100 text-red-650"
+            )}>
+              {summary.unallocated_amount === 0 ? (
+                <Check className="size-5" />
+              ) : (
+                <AlertCircle className="size-5" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content (List / Grid) */}
       {isLoading ? (
         // Pulsing Loading Skeletons
@@ -307,12 +379,19 @@ export function BudgetView() {
                 <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Category</th>
                 <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Period</th>
                 <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Limit Amount</th>
+                <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Spent</th>
+                <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Remaining</th>
                 <th className="px-6 py-4.5 text-[10px] font-bold text-zinc-400 tracking-wider uppercase text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {budgets.map((budget) => {
                 const formattedAmount = formatCurrency(Number(budget.amount) || 0);
+                const spent = Number(budget.spent) || 0;
+                const remaining = Number(budget.remaining) || 0;
+                const formattedSpent = formatCurrency(spent);
+                const formattedRemaining = formatCurrency(remaining);
+                const percentUsed = budget.amount > 0 ? Math.min(Math.round((spent / budget.amount) * 100), 100) : 0;
 
                 return (
                   <tr key={budget.id} className="hover:bg-zinc-50/40 transition-colors group">
@@ -321,9 +400,30 @@ export function BudgetView() {
                         <div className="size-8 rounded-lg bg-zinc-50 border border-zinc-150 flex items-center justify-center text-zinc-500 shrink-0">
                           <PiggyBank className="size-4.5" />
                         </div>
-                        <span className="font-semibold text-zinc-900 text-sm">
-                          {budget.category}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-zinc-900 text-sm">
+                            {budget.category}
+                          </span>
+                          {/* Mini Utilization Indicator */}
+                          <div className="flex items-center gap-1.5 mt-1 select-none">
+                            <div className="w-16 h-1 bg-zinc-100 rounded-full overflow-hidden">
+                              <div
+                                style={{ width: `${percentUsed}%` }}
+                                className={cn(
+                                  "h-full rounded-full",
+                                  percentUsed >= 90
+                                    ? "bg-red-500"
+                                    : percentUsed >= 70
+                                      ? "bg-amber-500"
+                                      : "bg-emerald-500"
+                                )}
+                              />
+                            </div>
+                            <span className="text-[10px] text-zinc-400 font-medium">
+                              {percentUsed}%
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -334,6 +434,19 @@ export function BudgetView() {
                     <td className="px-6 py-4">
                       <span className="font-bold text-zinc-900 text-sm">
                         {formattedAmount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-zinc-700 text-sm">
+                        {formattedSpent}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "font-bold text-sm",
+                        remaining < 0 ? "text-red-650" : "text-zinc-900"
+                      )}>
+                        {formattedRemaining}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
