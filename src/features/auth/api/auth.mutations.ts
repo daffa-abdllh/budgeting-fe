@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { loginUser, registerUser, logoutUser, forgotPassword, resetPassword, updateSalaryDay } from "./auth.api";
 import { USERINFO_QUERY_KEY } from "./auth.queries";
@@ -84,11 +84,14 @@ export function useResetPasswordMutation() {
 
 export function useUpdateSalaryDayMutation() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: (payload: SalaryDayInput) => updateSalaryDay(payload),
     onSuccess: (response) => {
       queryClient.setQueryData(USERINFO_QUERY_KEY, response.data);
+      queryClient.invalidateQueries();
+      router.invalidate();
       toast.success(response.message || "Salary day updated successfully!");
     },
     onError: (error: Error) => {
