@@ -28,4 +28,4 @@ dist-ssr
 agent.md
 Budgeting.postman_collection.json
 package-lock.json
-.env
+.env*

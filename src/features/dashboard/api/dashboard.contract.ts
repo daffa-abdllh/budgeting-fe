@@ -31,10 +31,12 @@ export interface UpcomingReminderItem {
 export interface DashboardSummaryData {
   month_year: string;
   total_net_worth: number;
+  difference: number;
   monthly_cashflow: {
     income: number;
     expense: number;
-    savings: number;
+    ending_balance: number;
+    unallocated_amount: number;
   };
   budget_summary: BudgetSummaryItem[];
   expense_by_wallet: ExpenseByWalletItem[];

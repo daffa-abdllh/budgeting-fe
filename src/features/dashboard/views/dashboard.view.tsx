@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useDashboardSummaryQuery } from "../api/dashboard.queries";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getDefaultMonthYear } from "@/lib/utils";
 import { Route as AuthRoute } from "@/routes/_auth";
 import {
   Wallet,
@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Check,
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -71,8 +72,8 @@ export function DashboardView() {
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
   const navigate = useNavigate();
 
-  // Active month_year state from search params (defaults to current month)
-  const currentMonthYear = new Date().toISOString().substring(0, 7);
+  // Active month_year state from search params (defaults based on payday)
+  const currentMonthYear = getDefaultMonthYear(user?.salary_day ?? 1);
   const activeMonthYear = search.month_year || currentMonthYear;
 
   // Fetch dashboard summary
@@ -191,7 +192,8 @@ export function DashboardView() {
 
   const {
     total_net_worth = 0,
-    monthly_cashflow = { income: 0, expense: 0, savings: 0 },
+    difference = 0,
+    monthly_cashflow = { income: 0, expense: 0, ending_balance: 0, unallocated_amount: 0 },
     budget_summary = [],
     expense_by_wallet = [],
     upcoming_reminders = [],
@@ -287,13 +289,28 @@ export function DashboardView() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* Net Worth Card */}
-        <div className="bg-white border border-zinc-150 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Total Net Worth</span>
-            <h3 className="text-xl font-bold text-zinc-900">{formatCurrency(total_net_worth)}</h3>
+        <div className="bg-white border border-zinc-150 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-2.5">
+          <div className="flex items-center justify-between w-full">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Total Net Worth</span>
+              <h3 className="text-xl font-bold text-zinc-900">{formatCurrency(total_net_worth)}</h3>
+            </div>
+            <div className="size-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+              <Wallet className="size-5 text-zinc-600" />
+            </div>
           </div>
-          <div className="size-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
-            <Wallet className="size-5 text-zinc-600" />
+          <div className="flex items-center gap-1.5 select-none">
+            {difference !== 0 ? (
+              <div className="flex items-center gap-1 text-[10px] font-semibold text-red-650 bg-red-50/50 border border-red-150/50 rounded-lg px-2.5 py-0.5">
+                <AlertCircle className="size-3 shrink-0" />
+                <span>Selisih: {formatCurrency(difference)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50/30 border border-emerald-100/50 rounded-lg px-2.5 py-0.5">
+                <Check className="size-3 shrink-0" />
+                <span>Fully Reconciled</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -329,12 +346,12 @@ export function DashboardView() {
           </div>
         </div>
 
-        {/* Monthly Savings Card */}
+        {/* Ending Balance Card */}
         <div className="bg-white border border-zinc-150 rounded-2xl p-5 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Savings</span>
-            <h3 className={`text-xl font-bold ${monthly_cashflow.savings >= 0 ? 'text-zinc-900' : 'text-red-600'}`}>
-              {formatCurrency(monthly_cashflow.savings)}
+            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase select-none">Ending Balance</span>
+            <h3 className={`text-xl font-bold ${monthly_cashflow.ending_balance >= 0 ? 'text-zinc-900' : 'text-red-600'}`}>
+              {formatCurrency(monthly_cashflow.ending_balance)}
             </h3>
           </div>
           <div className="size-10 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
@@ -356,6 +373,19 @@ export function DashboardView() {
               <div>
                 <h3 className="font-semibold text-zinc-900">Budget Utilization</h3>
                 <p className="text-xs text-zinc-400 mt-0.5">Track your category budget status</p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Sisa Anggaran</span>
+                <p className={cn(
+                  "text-sm font-bold mt-0.5",
+                  monthly_cashflow.unallocated_amount === 0
+                    ? "text-zinc-500"
+                    : monthly_cashflow.unallocated_amount > 0
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                )}>
+                  {formatCurrency(monthly_cashflow.unallocated_amount)}
+                </p>
               </div>
             </div>
             <div className="p-6">

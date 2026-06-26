@@ -3,7 +3,8 @@ import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useBudgetsQuery } from "../api/budget.queries";
 import { BudgetFormDialog } from "../components/budget-form-dialog";
 import { BudgetDeleteDialog } from "../components/budget-delete-dialog";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getDefaultMonthYear } from "@/lib/utils";
+import { Route as AuthRoute } from "@/routes/_auth";
 import {
   Plus,
   Pencil,
@@ -28,8 +29,10 @@ export function BudgetView() {
   const page = Number(search.page) || 1;
   const limit = Number(search.limit) || 10;
 
-  // Active month_year state from search params (defaults to current month)
-  const currentMonthYear = new Date().toISOString().substring(0, 7); // YYYY-MM
+  const user = AuthRoute.useLoaderData();
+
+  // Active month_year state from search params (defaults based on payday)
+  const currentMonthYear = getDefaultMonthYear(user?.salary_day ?? 1); // YYYY-MM
   const activeMonthYear = (search.month_year as string) || currentMonthYear;
 
   // Fetch budgets list

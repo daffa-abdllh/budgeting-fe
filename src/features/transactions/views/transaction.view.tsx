@@ -4,7 +4,8 @@ import { useTransactionsQuery } from "../api/transaction.queries";
 import { useWalletsQuery } from "@/features/wallets/api/wallet.queries";
 import { TransactionFormDialog } from "../components/transaction-form-dialog";
 import { TransactionDeleteDialog } from "../components/transaction-delete-dialog";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getDefaultMonthYear } from "@/lib/utils";
+import { Route as AuthRoute } from "@/routes/_auth";
 import {
   Plus,
   Pencil,
@@ -16,6 +17,8 @@ import {
   ChevronDown,
   Search,
   ArrowUpDown,
+  ArrowDownLeft,
+  ArrowUpRight,
   Wallet as WalletIcon,
   Tag,
   Receipt,
@@ -44,11 +47,13 @@ export function TransactionView() {
   const walletIdFilter = (search.wallet_id as string) || "";
   const typeFilter = (search.type as "IN" | "OUT" | "TRANSFER" | "") || "";
 
+  const user = AuthRoute.useLoaderData();
+
   // Calendar Picker Year/Month configuration
   const today = new Date();
   const todayYear = String(today.getFullYear());
   const todayMonth = String(today.getMonth() + 1).padStart(2, "0");
-  const currentMonthYear = `${todayYear}-${todayMonth}`;
+  const currentMonthYear = getDefaultMonthYear(user?.salary_day ?? 1);
 
   const yearMonthFilter = search.year_month !== undefined ? (search.year_month as string) : currentMonthYear;
 
@@ -608,14 +613,20 @@ export function TransactionView() {
                           className={cn(
                             "size-8.5 rounded-lg border flex items-center justify-center shrink-0 select-none mt-0.5",
                             isTransfer
-                              ? "bg-amber-50 border-amber-100 text-amber-500"
+                              ? tx.type === "IN"
+                                ? "bg-blue-50 border-blue-100 text-blue-500"
+                                : "bg-amber-50 border-amber-100 text-amber-500"
                               : tx.type === "IN"
                                 ? "bg-emerald-50 border-emerald-100 text-emerald-500"
                                 : "bg-red-50 border-red-100 text-red-500"
                           )}
                         >
                           {isTransfer ? (
-                            <ArrowUpDown className="size-4.5" />
+                            tx.type === "IN" ? (
+                              <ArrowDownLeft className="size-4.5" />
+                            ) : (
+                              <ArrowUpRight className="size-4.5" />
+                            )
                           ) : (
                             <Receipt className="size-4.5" />
                           )}
@@ -623,14 +634,20 @@ export function TransactionView() {
                         <div className="min-w-0">
                           {isTransfer ? (
                             <div className="flex flex-col gap-0.5">
-                              <h4 className="font-semibold text-zinc-900 text-sm select-none">
-                                Transfer of Funds
+                              <h4 className="font-semibold text-zinc-900 text-sm truncate max-w-[200px] md:max-w-xs pr-2">
+                                {tx.description || "Transfer"}
                               </h4>
-                              <div className="text-[11px] font-medium text-zinc-500 flex items-center gap-1.5 select-none">
-                                <span>{tx.type === "OUT" ? tx.wallet?.name || "Unknown" : tx.linked_transaction?.wallet_name || "Unknown"}</span>
-                                <span className="text-zinc-400">→</span>
-                                <span className="font-semibold text-zinc-800">{tx.type === "OUT" ? tx.linked_transaction?.wallet_name || "Unknown" : tx.wallet?.name || "Unknown"}</span>
-                              </div>
+                              <span className="text-[11px] font-medium text-zinc-400 select-none">
+                                {tx.type === "OUT" ? (
+                                  <>
+                                    to <span className="font-semibold text-zinc-600">{tx.linked_transaction?.wallet_name || "Unknown"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    from <span className="font-semibold text-zinc-600">{tx.linked_transaction?.wallet_name || "Unknown"}</span>
+                                  </>
+                                )}
+                              </span>
                             </div>
                           ) : (
                             <h4 className="font-semibold text-zinc-900 text-sm truncate max-w-[200px] md:max-w-xs pr-2">
@@ -646,14 +663,10 @@ export function TransactionView() {
 
                     {/* Wallet */}
                     <td className="px-6 py-4">
-                      {isTransfer ? (
-                        <span className="text-zinc-400 font-medium text-xs select-none">-</span>
-                      ) : (
-                        <div className="flex items-center gap-2 text-zinc-500 font-medium text-sm">
-                          <WalletIcon className="size-4 text-zinc-400 shrink-0" />
-                          <span>{tx.wallet?.name || "Unknown"}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-zinc-500 font-medium text-sm">
+                        <WalletIcon className="size-4 text-zinc-400 shrink-0" />
+                        <span>{tx.wallet?.name || "Unknown"}</span>
+                      </div>
                     </td>
 
                     {/* Category */}
@@ -675,8 +688,13 @@ export function TransactionView() {
 
                     {/* Amount */}
                     <td className="px-6 py-4">
-                      <span className="font-bold text-sm text-zinc-900">
-                        {!isTransfer && (tx.type === "IN" ? "+" : "-")}
+                      <span
+                        className={cn(
+                          "font-bold text-sm",
+                          tx.type === "IN" ? "text-emerald-600" : "text-red-600"
+                        )}
+                      >
+                        {tx.type === "IN" ? "+" : "-"}
                         {formattedAmount}
                       </span>
                     </td>
