@@ -368,8 +368,8 @@ export function DashboardView() {
         <div className="lg:col-span-7 space-y-8">
           
           {/* Budget Summary Section */}
-          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm">
-            <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between select-none">
+          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm h-[380px] flex flex-col overflow-hidden">
+            <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between select-none shrink-0">
               <div>
                 <h3 className="font-semibold text-zinc-900">Budget Utilization</h3>
                 <p className="text-xs text-zinc-400 mt-0.5">Track your category budget status</p>
@@ -388,9 +388,9 @@ export function DashboardView() {
                 </p>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               {budget_summary.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none">
+                <div className="flex flex-col items-center justify-center h-full border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none">
                   <Inbox className="size-8 text-zinc-300 mb-2" />
                   <p className="text-xs font-medium text-zinc-500">No active budgets set for this month</p>
                 </div>
@@ -449,14 +449,14 @@ export function DashboardView() {
           </div>
 
           {/* Expense by Wallet Section */}
-          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm">
-            <div className="px-6 py-5 border-b border-zinc-100 select-none">
+          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm h-[380px] flex flex-col overflow-hidden">
+            <div className="px-6 py-5 border-b border-zinc-100 select-none shrink-0">
               <h3 className="font-semibold text-zinc-900">Expenses by Wallet</h3>
               <p className="text-xs text-zinc-400 mt-0.5">Where your funds were spent from</p>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               {expense_by_wallet.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none">
+                <div className="flex flex-col items-center justify-center h-full border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none">
                   <Inbox className="size-8 text-zinc-300 mb-2" />
                   <p className="text-xs font-medium text-zinc-500">No expenses recorded from any wallet</p>
                 </div>
@@ -484,14 +484,14 @@ export function DashboardView() {
         <div className="lg:col-span-5">
           
           {/* Upcoming Bills Card */}
-          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm h-full flex flex-col">
-            <div className="px-6 py-5 border-b border-zinc-100 select-none">
+          <div className="bg-white border border-zinc-150 rounded-2xl shadow-sm h-[380px] lg:h-full flex flex-col overflow-hidden">
+            <div className="px-6 py-5 border-b border-zinc-100 select-none shrink-0">
               <h3 className="font-semibold text-zinc-900">Upcoming Bills</h3>
               <p className="text-xs text-zinc-400 mt-0.5">Bills due for this month</p>
             </div>
-            <div className="p-6 flex-1 flex flex-col justify-start">
+            <div className="p-6 overflow-y-auto flex-1">
               {upcoming_reminders.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center py-16 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none">
+                <div className="flex-col items-center justify-center h-full border border-dashed border-zinc-200 rounded-xl bg-zinc-50/40 select-none flex">
                   <Bell className="size-8 text-zinc-300 mb-2" />
                   <p className="text-xs font-medium text-zinc-500">No upcoming bills this month</p>
                 </div>

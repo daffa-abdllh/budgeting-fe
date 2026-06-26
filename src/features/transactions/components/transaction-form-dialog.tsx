@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { Loader2, X, AlertTriangle, ArrowUpDown, Receipt, ArrowDown, Wallet, Tag, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Check } from "lucide-react";
+import { Loader2, X, AlertTriangle, ArrowUpDown, Receipt, ArrowDown, Wallet, Tag, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -506,6 +506,7 @@ function TransactionForm({ transaction, isTransferEdit, onClose }: TransactionFo
                   icon={<Tag className="size-4" />}
                   disabled={isTransferEdit}
                   hasError={hasError}
+                  searchable={true}
                 />
               </div>
             );
@@ -949,6 +950,7 @@ export interface CustomSelectProps {
   icon?: React.ReactNode;
   disabled?: boolean;
   hasError?: boolean;
+  searchable?: boolean;
 }
 
 export function CustomSelect({
@@ -959,10 +961,32 @@ export function CustomSelect({
   icon,
   disabled = false,
   hasError = false,
+  searchable = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const selectedOption = options.find((opt) => opt.value === value);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("");
+    } else if (searchable) {
+      // Focus input automatically on open
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, searchable]);
+
+  const filteredOptions = options.filter((opt) => {
+    return (
+      opt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (opt.sublabel && opt.sublabel.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   return (
     <div className="relative w-full">
@@ -1000,38 +1024,60 @@ export function CustomSelect({
           <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsOpen(false)} />
           {/* Dropdown Options Box */}
           <div className="absolute left-0 right-0 top-12.5 z-50 max-h-60 overflow-y-auto bg-white border border-zinc-150 rounded-xl p-1.5 shadow-lg flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-2 duration-150">
-            {options.map((opt) => {
-              const isSelected = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "w-full text-left py-2 px-3 text-sm font-medium rounded-lg transition-all cursor-pointer flex items-center justify-between gap-2",
-                    isSelected
-                      ? "bg-zinc-900 text-white font-semibold shadow-sm"
-                      : "text-zinc-650 hover:bg-zinc-50 hover:text-zinc-900"
-                  )}
-                >
-                  <div className="truncate flex items-baseline gap-1.5">
-                    <span>{opt.label}</span>
-                    {opt.sublabel && (
-                      <span className={cn(
-                        "text-[10px] select-none font-medium",
-                        isSelected ? "text-zinc-300" : "text-zinc-400"
-                      )}>
-                        {opt.sublabel}
-                      </span>
+            {searchable && (
+              <div className="px-2 py-1.5 sticky top-0 bg-white z-10 border-b border-zinc-100 mb-1">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-100 rounded-lg pl-8 pr-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950"
+                  />
+                </div>
+              </div>
+            )}
+
+            {filteredOptions.length === 0 ? (
+              <div className="text-center py-4 text-xs font-semibold text-zinc-450 select-none">
+                No results found
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left py-2 px-3 text-sm font-medium rounded-lg transition-all cursor-pointer flex items-center justify-between gap-2",
+                      isSelected
+                        ? "bg-zinc-900 text-white font-semibold shadow-sm"
+                        : "text-zinc-650 hover:bg-zinc-50 hover:text-zinc-900"
                     )}
-                  </div>
-                  {isSelected && <Check className="size-4 shrink-0" />}
-                </button>
-              );
-            })}
+                  >
+                    <div className="truncate flex items-baseline gap-1.5">
+                      <span>{opt.label}</span>
+                      {opt.sublabel && (
+                        <span className={cn(
+                          "text-[10px] select-none font-medium",
+                          isSelected ? "text-zinc-300" : "text-zinc-400"
+                        )}>
+                          {opt.sublabel}
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && <Check className="size-4 shrink-0" />}
+                  </button>
+                );
+              })
+            )}
           </div>
         </>
       )}
@@ -1044,38 +1090,58 @@ export function CustomSelect({
           title={placeholder}
         >
           <div className="flex flex-col gap-1.5 w-full">
-            {options.map((opt) => {
-              const isSelected = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "w-full text-left py-3.5 px-4 text-sm font-semibold rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border border-transparent select-none",
-                    isSelected
-                      ? "bg-zinc-900 text-white font-bold shadow-md"
-                      : "text-zinc-650 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-900"
-                  )}
-                >
-                  <div className="truncate flex items-baseline gap-2">
-                    <span className="text-sm">{opt.label}</span>
-                    {opt.sublabel && (
-                      <span className={cn(
-                        "text-xs select-none font-medium",
-                        isSelected ? "text-zinc-300" : "text-zinc-400"
-                      )}>
-                        {opt.sublabel}
-                      </span>
+            {searchable && (
+              <div className="relative mb-2 px-1">
+                <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Cari..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-150 rounded-xl pl-11 pr-4 h-10 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 shadow-sm"
+                />
+              </div>
+            )}
+
+            {filteredOptions.length === 0 ? (
+              <div className="text-center py-6 text-sm font-semibold text-zinc-450 select-none">
+                No results found
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left py-3.5 px-4 text-sm font-semibold rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border border-transparent select-none",
+                      isSelected
+                        ? "bg-zinc-900 text-white font-bold shadow-md"
+                        : "text-zinc-650 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-900"
                     )}
-                  </div>
-                  {isSelected && <Check className="size-4.5 shrink-0" />}
-                </button>
-              );
-            })}
+                  >
+                    <div className="truncate flex items-baseline gap-2">
+                      <span className="text-sm">{opt.label}</span>
+                      {opt.sublabel && (
+                        <span className={cn(
+                          "text-xs select-none font-medium",
+                          isSelected ? "text-zinc-300" : "text-zinc-400"
+                        )}>
+                          {opt.sublabel}
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && <Check className="size-4.5 shrink-0" />}
+                  </button>
+                );
+              })
+            )}
           </div>
         </BottomSheet>
       )}
